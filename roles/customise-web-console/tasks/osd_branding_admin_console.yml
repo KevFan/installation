@@ -1,0 +1,24 @@
+- name: "retrieve current admin web console configmap"
+  shell: oc get configmap {{ customise_cluster_console.configmap_name }} -n {{ customise_cluster_console.namespace }} --template '{{ "{{" }} index .data "{{ customise_cluster_console.configmap_key -}}" {{ "}}" }}'
+  register: get_web_console_config
+  changed_when: false
+
+- name: "write current openshift console config to a temporary file"
+  copy: content={{ get_web_console_config.stdout }} dest=/tmp/{{ customise_cluster_console.configmap_key }}
+
+- name: "Add changes for branding for console configmap for osd branding"
+  yedit:
+    src: /tmp/{{ customise_cluster_console.configmap_key }}
+    key: customization.branding
+    value: "{{branding_value}}"
+  register: new_console_config
+
+- name: "update {{ customise_cluster_console.namespace }}/{{ customise_cluster_console.configmap_name }} configmap"
+  shell: oc create configmap {{ customise_cluster_console.configmap_name }} --from-file=/tmp/{{ customise_cluster_console.configmap_key }} -n {{ customise_cluster_console.namespace }} --dry-run -o yaml | oc replace -f -
+  when: new_console_config is changed
+
+- name: "scale down the console pod to reflect branding change"
+  shell: "oc scale --replicas=0 deployment/console -n openshift-console"
+
+- name: "scale back up the console pod to reflect branding change"
+  shell: "oc scale --replicas=1 deployment/console -n openshift-console"

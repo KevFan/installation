@@ -1,0 +1,18 @@
+- name: "Get base route of OSD branding"
+  # shell: "oc get route oso-console-extensions -n openshift-infra -o json | jq '.spec.host'"
+  shell: echo "oso-console-extensions-openshift-infra.ac88.rhmi-dev1.openshiftapps.com" # TODO: Remove - Just hardcoded for testing on PDS - should use route from above on OSD clusters
+  register: base_branding_route
+
+- name: "Add changes for stylesheetURLs for console configmap for osd branding"
+  yedit:
+    src: /tmp/{{ customise_web_console.web_console.configmap_key }}
+    key: extensions.stylesheetURLs
+    update: true
+    value: "https://{{ base_branding_route.stdout }}/ui/assets/extensions/{{ customise_web_console.osd_branding_stylesheet }}"
+    state: "{{ yamlState }}"
+  register: new_web_console_config
+
+- name: "update {{ customise_web_console.web_console.namespace }}/{{ customise_web_console.web_console.configmap }} configmap"
+  shell: oc create configmap {{ customise_web_console.web_console.configmap }} --from-file=/tmp/{{ customise_web_console.web_console.configmap_key }} -n {{ customise_web_console.web_console.namespace }} --dry-run -o yaml | oc replace -f -
+  when: new_web_console_config is changed
+  

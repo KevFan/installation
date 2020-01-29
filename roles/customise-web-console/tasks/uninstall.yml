@@ -35,9 +35,19 @@
       register: new_web_console_config
       when: get_web_console_config.stdout != ""
 
-    - name: "update {{ customise_web_console.web_console.namespace }}/{{ customise_web_console.web_console.configmap }} configmap"
-      shell: oc create configmap {{ customise_web_console.web_console.configmap }} --from-file=/tmp/{{ customise_web_console.web_console.configmap_key }} -n {{ customise_web_console.web_console.namespace }} --dry-run -o yaml | oc replace -f -
-      when: new_web_console_config is changed
+# TODO: Should remove this after testing - Probably wouldn't ever need to remove the OSD branding on an OSD cluster
+    - name: "Remove OSD Console branding if cluster is OSD"
+      import_tasks: osd_branding.yml
+      vars: 
+        yamlState: "absent"
+      when: cluster_type == "osd"
+
+- name: "Remove OSD Console branding for cluster console if cluster is OSD"
+  import_tasks: osd_branding_admin_console.yml
+  vars:
+    branding_value: "ocp"
+  when: cluster_type == "osd"
+# End of what needs to be removed
 
 - include_role:
     name: namespace

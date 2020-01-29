@@ -51,5 +51,22 @@
       name: rhsso-user
       tasks_from: disable-idp-review-link-confirm.yml
 
+  # Ensure styling is correct on OSD clusters
+  - name: Ensure OSD styling on web console for OSD clusters
+    include_role:
+      name: customise-web-console
+      tasks_from: osd_branding.yml
+    vars: 
+      yamlState: present
+    when: cluster_type == "osd"
+
+  - name: "Ensure OSD Console branding for cluster console for OSD clsuters"
+    include_role:
+      name: customise-web-console
+      tasks_from: osd_branding_admin_console.yml
+    vars:
+      branding_value: "dedicated"
+    when: cluster_type == "osd"
+
 #Update product version (should always be last)
 - import_playbook: "./generate-customisation-inventory.yml"

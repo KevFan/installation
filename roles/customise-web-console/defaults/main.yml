@@ -5,6 +5,7 @@ customise_web_console:
   deploy_filename: /tmp/web-console-deploy.yml
   app_name: web-console-config-web-server
   route_name: web-console-config-route
+  osd_branding_stylesheet: dedicated-extensions.css
   webapp:
     secret: manifest
     secret_key: generated_manifest
@@ -50,3 +51,8 @@ customise_web_console:
       name: Gitea
       icon: fa fa-noicon
       description: A painless self-hosted Git service.
+
+customise_cluster_console:
+  namespace: openshift-console
+  configmap_name: console-config
+  configmap_key: console-config.yaml
